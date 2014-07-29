@@ -1,0 +1,23 @@
+{
+  "name": "noflo-crawler",
+  "description": "Flow-based components for HTTP crawling.",
+  "author": "Jan Vlnas <hello@jan.vlnas.cz>",
+  "repo": "jnv/noflo-crawler",
+  "version": "0.0.1",
+  "keywords": [],
+  "dependencies": {
+    "noflo/noflo": "*"
+  },
+  "scripts": [
+    "index.js",
+    "components/FetchUrl.coffee"
+  ],
+  "json": [
+    "component.json"
+  ],
+  "noflo": {
+    "components": {
+      "FetchUrl": "components/FetchUrl.coffee"
+    }
+  }
+}
