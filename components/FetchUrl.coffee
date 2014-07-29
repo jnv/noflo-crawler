@@ -1,25 +1,37 @@
 noflo = require 'noflo'
+request = require 'request'
 
-exports.getComponent = ->
-  c = new noflo.Component
+class FetchUrl extends noflo.AsyncComponent
+  # icon: 'bars'
+  description: 'Given an URL, fetch an URL and return its status, body and headers.'
+  constructor: ->
+    @inPorts =
+      url: new noflo.Port
+        datatype: 'string'
+        required: true
+        description: 'URL to be fetched'
+    @outPorts =
+      out: new noflo.Port
+        datatype: 'object'
+      error: new noflo.Port
+        datatype: 'object'
+    super('url')
 
-  # Define a meaningful icon for component from http://fontawesome.io/icons/
-  c.icon = 'cog'
+  doAsync: (url, callback) ->
+    @outPorts.out.connect()
 
-  # Provide a description on component usage
-  c.description = 'do X'
+    request.get url, {}, (error, response, body) =>
+      if(!error)
+        data =
+          status: response.statusCode
+          headers: response.headers
+          body: body
+        @outPorts.out.beginGroup url
+        @outPorts.out.send data
+        @outPorts.out.endGroup()
+        return callback null
+      else
+        @outPorts.out.disconnect()
+        return callback error
 
-  # Add input ports
-  c.inPorts.add 'in',
-    datatype: 'string'
-    process: (event, payload) ->
-      # What to do when port receives a packet
-      return unless event is 'data'
-      c.outPorts.out.send payload
-
-  # Add output ports
-  c.outPorts.add 'out',
-    datatype: 'string'
-
-  # Finally return the component instance
-  c
+exports.getComponent = -> new FetchUrl

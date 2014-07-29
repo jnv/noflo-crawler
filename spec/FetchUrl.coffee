@@ -1,23 +1,50 @@
 noflo = require 'noflo'
-unless noflo.isBrowser()
-  chai = require 'chai' unless chai
-  FetchUrl = require '../components/FetchUrl.coffee'
-else
-  FetchUrl = require 'noflo-crawler/components/FetchUrl.js'
+chai = require 'chai' unless chai
+nock = require 'nock'
+FetchUrl = require '../components/FetchUrl.coffee'
 
 describe 'FetchUrl component', ->
   c = null
-  ins = null
+  url = null
   out = null
+  scope = null
+
   beforeEach ->
     c = FetchUrl.getComponent()
-    ins = noflo.internalSocket.createSocket()
+    url = noflo.internalSocket.createSocket()
     out = noflo.internalSocket.createSocket()
-    c.inPorts.in.attach ins
+    c.inPorts.url.attach url
     c.outPorts.out.attach out
+    nock.disableNetConnect()
+
+    reqMock = nock 'http://www.example.com'
+            .get '/'
+            .reply 200, 'Hello!'
+
 
   describe 'when instantiated', ->
-    it 'should have an input port', ->
-      chai.expect(c.inPorts.in).to.be.an 'object'
+    it 'should have an url port', ->
+      chai.expect(c.inPorts.url).to.be.an 'object'
     it 'should have an output port', ->
       chai.expect(c.outPorts.out).to.be.an 'object'
+    it 'should have an error port', ->
+      chai.expect(c.outPorts.error).to.be.an 'object'
+
+  describe 'fetching an existing URL', ->
+    it 'should return contents as an object', (done) ->
+      out.on 'data', (data) ->
+        chai.expect(data).to.be.a 'object'
+        chai.expect(data).to.contain.keys 'status', 'headers', 'body'
+        console.log data
+        # scope.done()
+        done()
+      url.send 'http://www.example.com/'
+
+  describe 'fetching a failing URL', ->
+    it 'should return an error', (done) ->
+      err = noflo.internalSocket.createSocket()
+      c.outPorts.error.attach err
+      err.on 'data', (data) ->
+        chai.expect(data).to.be.an 'object'
+        done()
+      url.send 'http://google.com/'
